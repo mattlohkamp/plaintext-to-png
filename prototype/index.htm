@@ -1,0 +1,70 @@
+<html>
+	<head>
+		<style type="text/css">
+			html, body {
+				height: 100%;
+				margin: 0;
+				padding: 0;
+			}
+			#container {
+				min-height: 100%;
+				display: flex;
+			}
+			#controls-container, #content-container {
+				flex: 1 1 50%;
+				min-height: 100%;
+				padding: 1em;
+			}
+			#plaintextInput {
+				width: 80ex;
+				height: 100%;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="container">
+			<div id="content-container">
+				<textarea id="plaintextInput">Enter your plaintext here!</textarea>
+			</div>
+			<div id="controls-container">
+				<ul>
+					<li><label>
+						<span>Background Color:</span>
+						<input type="color" id="bgColor" value="#2d3250" />
+					</label></li>
+					<li><label>
+							<span>Text Color:</span>
+							<input type="color" id="fgColor" value="#7077a1" />
+					</label></li>
+					<li><label>
+							<span>Text Size:</span>
+							<input type="number" id="fontSize" value="16" min="1" />
+					</label></li>
+					<li><label>
+							<span>Textbox Padding:</span>
+							<input type="number" id="textboxPadding" value="10" min="0" />
+					</label></li>
+				</ul>
+				<button type="button">Download .png</button>
+			</div>
+		</div>
+		
+		<!--	jabblescraps	-->
+		
+		<script type="text/javascript">
+			const bgColorEl = document.querySelector('#bgColor');
+			const fgColorEl = document.querySelector('#fgColor');
+			const fontSizeEl = document.querySelector('#fontSize');
+			const textboxPaddingEl = document.querySelector('#textboxPadding');
+			const plaintextInputEl = document.querySelector('#plaintextInput');
+			function applyColors(){
+				plaintextInputEl.style.backgroundColor = bgColorEl.value;
+				plaintextInputEl.style.padding = textboxPaddingEl.value;
+				plaintextInputEl.style.color = fgColorEl.value;
+				plaintextInputEl.style.fontSize = fontSizeEl.value;
+			}
+			
+			applyColors();
+		</script>
+	</body>
+</html>
