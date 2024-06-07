@@ -1,11 +1,7 @@
-<!DOCTYPE html>
 <html>
 	<head>
 		<meta name="color-scheme" content="dark light" />
 		<style type="text/css">
-			html {
-				
-			}
 			:root {
 			  --fg-color-light: #cacaca;
 			  --bg-color-light: #cacaca;
@@ -32,13 +28,20 @@
 				min-height: 100%;
 				height: min-content;
 				border-radius: 16px;
-				border: 16px solid var(--fg-color-dark);
 				background-color: var(--bg-color-dark);
 			}
 		</style>
 	</head>
 	<body>
 		<div id="container">
+		<!--
+			TODO: automatic render from being fed a plaintext submission URL
+			 - take entry url
+			 - get txt content
+			 - get user palette
+			 - render png
+			 - maybe even forward to render submit page and prepopulate??
+		-->
 			<div id="content-container">
 				<textarea id="plaintextInput" autocomplete="off" spellcheck="false">
 NES (Nintendo Entertainment System) game soundtracks often feature archetypal tracks that are characteristic of the 8-bit era. Here are some common archetypal tracks found in NES game soundtracks:
@@ -90,17 +93,11 @@ NES soundtracks are known for their memorable melodies, limited but distinctive 
 			</div>
 		</div>
 		
-		<!--	jabblescraps	-->
+		<!--	jibbletyscrills	-->
 		
 		<script type="text/javascript">
-			const bgColorEl = document.querySelector('#bgColor');
-			const fgColorEl = document.querySelector('#fgColor');
-			const fontSizeEl = document.querySelector('#fontSize');
-			const textboxPaddingEl = document.querySelector('#textboxPadding');
-			const plaintextInputEl = document.querySelector('#plaintextInput');
-			[bgColorEl,fgColorEl,fontSizeEl,textboxPaddingEl,plaintextInputEl].forEach(el=>{
-				el.addEventListener('change', applyColors);
-			});
+			let bgColorEl,fgColorEl,fontSizeEl,textboxPaddingEl,plaintextInputEl;
+			
 			function applyColors(){
 				plaintextInputEl.style.backgroundColor = bgColorEl.value;
 				plaintextInputEl.style.padding = textboxPaddingEl.value;
@@ -108,7 +105,17 @@ NES soundtracks are known for their memorable melodies, limited but distinctive 
 				plaintextInputEl.style.fontSize = fontSizeEl.value;
 			}
 			
-			applyColors();
+			document.addEventListener("DOMContentLoaded", () => {
+				bgColorEl = document.querySelector('#bgColor');
+				fgColorEl = document.querySelector('#fgColor');
+				fontSizeEl = document.querySelector('#fontSize');
+				textboxPaddingEl = document.querySelector('#textboxPadding');
+				plaintextInputEl = document.querySelector('#plaintextInput');
+				[bgColorEl,fgColorEl,fontSizeEl,textboxPaddingEl,plaintextInputEl].forEach(el=>{
+					el.addEventListener('change', applyColors);
+				});
+				applyColors();
+			});
 		</script>
 	</body>
 </html>
