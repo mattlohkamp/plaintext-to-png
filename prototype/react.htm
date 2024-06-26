@@ -1,128 +1,177 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Hello World</title>
-	
-	<style>
-		#fetch-status-input	{
-			display: block;
-			width: 100%;
-		}
-	</style>
-	
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+	<head>
+		<meta charset="UTF-8" />
+		<title>Hello World</title>
 
-    <!-- Don't use this in production: -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="text/babel">
-		const entryURLIDRegex = /\/Entry\/[^\/]+\/(\d+)/;
-		const entryURLInputRegex = 'https?:\/\/battleofthebits.com\/arena\/Entry\/.*';
-		const APILoadEntry = (entryID)=>`https://battleofthebits.com/api/v1/entry/load/${entryID}`;
-	
-		function renderFetchingMessage(entryID) {
-			return `supplicating server for entry #${entryID}, please wait...`;
-		}
-		
-		function renderFetchSuccessMessage(entry) {
-			return `Loaded: "${entry.title}" by ${entry.authors_display} for ${entry.battle.title} (${entry.datetime_display})`;
-		}
-		
-		function getContentByEntry(entry) {
-			
-		}
-		
-		function getPaletteByID(paletteID) {
-			
-		}
-	
-		function Plaintext2PNG() {
-		
-			const entryURLInputElement = React.useRef(null);
-			const fetchStatusInputElement = React.useRef(null);
-			const fetchEntryURLButtonElement = React.useRef(null);
-			
-			
-			async function getEntryByID(entryID) {
-				fetchEntryURLButtonElement.current.disabled = true;
-				fetchStatusInputElement.current.value = renderFetchingMessage(entryID);
-				const fetchEntryResponse = await fetch(APILoadEntry(entryID));
-				//	TODO: error-handling
-				const entryJSON = fetchEntryResponse.json()
-				fetchEntryURLButtonElement.current.disabled = false;
-				return entryJSON;
+		<style>
+			#fetch-status-input {
+				display: block;
+				width: 100%;
 			}
-			
-			
-			async function populateFromEntryURL(){
-				
-				const entryURLIsValid = entryURLInputElement.current.reportValidity();
-				if(entryURLIsValid){
-					const [,entryID] = entryURLInputElement.current.value.match(entryURLIDRegex)
-					const entry = await getEntryByID(entryID);
-					fetchStatusInputElement.current.value = renderFetchSuccessMessage(entry);
-						//	TODO:	put content into textarea
+			.loader {
+				width: 1em;
+				float: left;
+				--b: 4px;
+				aspect-ratio: 1;
+				border-radius: 50%;
+				padding: 2px;
+				margin-right: 4px;
+				background: conic-gradient(#0000 10%, #000000) content-box;
+				mask: repeating-conic-gradient(
+						#0000 0deg,
+						#000 1deg 20deg,
+						#0000 21deg 36deg
+					),
+					radial-gradient(
+						farthest-side,
+						#0000 calc(100% - var(--b) - 1px),
+						#000 calc(100% - var(--b))
+					);
+				mask-composite: intersect;
+				animation: l4 1s infinite steps(10);
+			}
+			@keyframes l4 {
+				to {
+					transform: rotate(1turn);
 				}
 			}
-			
-			function onClickFetchPlaintext() {
-				populateFromEntryURL();
+		</style>
+
+		<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+		<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+		<!-- Don't use this in production: -->
+		<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+	</head>
+	<body>
+		<div id="root"></div>
+		<script type="text/babel">
+			/*
+				GET https://battleofthebits.com/arena/Entry/santa+contest/64337/
+				-> `https://battleofthebits.com/api/v1/entry/load/${entry.id}`
+					-> `"${entry.title}" by ${entry.authors_display} for ${entry.battle.title} (${entry.datetime_display})`
+					-> GET `https://battleofthebits.com/${donload_url}`
+					-> populate textarea with plaintext content
+					-> GET `https://battleofthebits.com/ajax/req/botbr/AjaxPalette/${botbr.id}`
+					-> parse out palettes and select on botbr.palette_id
+			*/
+
+			const entryURLIDRegex = /\/Entry\/[^\/]+\/(\d+)/;
+			const entryURLInputRegex =
+				"https?:\/\/battleofthebits.com\/arena\/Entry\/.*";
+			const APILoadEntry = (entryID) =>
+				`https://battleofthebits.com/api/v1/entry/load/${entryID}`;
+
+			function renderFetchingMessage(entryID) {
+				return `supplicating server for entry #${entryID}, please wait...`;
 			}
-			
-			return <form>
-				<fieldset>
-					<label><span>Emtry URL:</span>
-					
-					{/* <!--
-							GET https://battleofthebits.com/arena/Entry/santa+contest/64337/
-							-> `https://battleofthebits.com/api/v1/entry/load/${entry.id}`
-							 -> `"${entry.title}" by ${entry.authors_display} for ${entry.battle.title} (${entry.datetime_display})`
-							 -> GET `https://battleofthebits.com/${donload_url}`
-							  -> populate textarea with plaintext content
-							 -> GET `https://battleofthebits.com/ajax/req/botbr/AjaxPalette/${botbr.id}`
-							  -> parse out palettes and select on botbr.palette_id
-						--> */}
-						
-						<input ref={entryURLInputElement} type="url" required minLength="40" pattern={entryURLInputRegex} placeholder="https://battleofthebits.com/arena/Entry/example/565656/" />
-					</label>
-					<button ref={fetchEntryURLButtonElement} type="button" onClick={onClickFetchPlaintext}>Procure Plaintext</button>
-					<input ref={fetchStatusInputElement} id="fetch-status-input" type="text" type="readonly" placeholder="supplicating server..." />
-				</fieldset>
-				<fieldset>
-					<div>OR</div>
-					<label>
-						<span>Postod your plaintext below:</span>
-						<textarea defaultValue="Hello, world!"></textarea>
-					</label>
-					<label>
-						<span>Width (px)</span>
-						<input name="width" type="number" value="450" />
-					</label>
-					<label>
-						<span>Text Size (pt)</span>
-						<input name="size" type="number" value="16" />
-					</label>
-					<label>
-						<span>Line Spacing (%)</span>
-						<input name="size" type="number" value="16" />
-					</label>
-					<label>
-						<span>Padding (px)</span>
-						<input name="padding" type="number" value="5" />
-					</label>
-				</fieldset>
-			</form>;
-		}
-		
-		const container = document.getElementById('root');
-		const root = ReactDOM.createRoot(container);
-		root.render(<Plaintext2PNG />);
-    </script>
-    <!--
+
+			function renderFetchSuccessMessage(entry) {
+				return `Loaded: "${entry.title}" by ${entry.authors_display} for ${entry.battle.title} (${entry.datetime_display})`;
+			}
+
+			function getContentByEntry(entry) {}
+
+			function getPaletteByID(paletteID) {}
+
+			function Plaintext2PNG() {
+				const [entryLoading, setEntryLoading] = React.useState(false);
+
+				const entryURLInputElement = React.useRef(null);
+				const fetchStatusInputElement = React.useRef(null);
+				const fetchEntryURLButtonElement = React.useRef(null);
+
+				async function getEntryByID(entryID) {
+					setEntryLoading(true);
+					fetchEntryURLButtonElement.current.disabled = true;
+					fetchStatusInputElement.current.value =
+						renderFetchingMessage(entryID);
+					const fetchEntryResponse = await fetch(APILoadEntry(entryID));
+					//	TODO: error-handling
+					const entryJSON = fetchEntryResponse.json();
+					fetchEntryURLButtonElement.current.disabled = false;
+					setEntryLoading(false);
+					return entryJSON;
+				}
+
+				async function populateFromEntryURL() {
+					const entryURLIsValid = entryURLInputElement.current.reportValidity();
+					if (entryURLIsValid) {
+						const [, entryID] =
+							entryURLInputElement.current.value.match(entryURLIDRegex);
+						const entry = await getEntryByID(entryID);
+						fetchStatusInputElement.current.value =
+							renderFetchSuccessMessage(entry);
+						//	TODO:	put content into textarea
+					}
+				}
+
+				function onClickFetchPlaintext() {
+					populateFromEntryURL();
+				}
+
+				return (
+					<form>
+						<fieldset>
+							<label>
+								<span>Emtry URL:</span>
+								<input
+									ref={entryURLInputElement}
+									type="url"
+									required
+									minLength="40"
+									pattern={entryURLInputRegex}
+									placeholder="https://battleofthebits.com/arena/Entry/example/565656/"
+								/>
+							</label>
+							<button
+								ref={fetchEntryURLButtonElement}
+								type="button"
+								onClick={onClickFetchPlaintext}>
+								{entryLoading && <div className="loader"></div>}
+								<span>Procure Plaintext</span>
+							</button>
+							<input
+								ref={fetchStatusInputElement}
+								id="fetch-status-input"
+								type="text"
+								readOnly
+								placeholder="supplicating server..."
+							/>
+						</fieldset>
+						<fieldset>
+							<div>OR</div>
+							<label>
+								<span>Postod your plaintext below:</span>
+								<textarea defaultValue="Hello, world!"></textarea>
+							</label>
+							<label>
+								<span>Width (px)</span>
+								<input name="width" type="number" defaultValue="450" />
+							</label>
+							<label>
+								<span>Text Size (pt)</span>
+								<input name="size" type="number" defaultValue="16" />
+							</label>
+							<label>
+								<span>Line Spacing (%)</span>
+								<input name="size" type="number" defaultValue="16" />
+							</label>
+							<label>
+								<span>Padding (px)</span>
+								<input name="padding" type="number" defaultValue="5" />
+							</label>
+						</fieldset>
+					</form>
+				);
+			}
+
+			const container = document.getElementById("root");
+			const root = ReactDOM.createRoot(container);
+			root.render(<Plaintext2PNG />);
+		</script>
+		<!--
       Note: this page is a great way to try React but it's not suitable for production.
       It slowly compiles JSX with Babel in the browser and uses a large development build of React.
 
@@ -132,5 +181,5 @@
       Read this page for adding React with JSX to an existing project:
       https://react.dev/learn/add-react-to-an-existing-project
     -->
-  </body>
+	</body>
 </html>
