@@ -1,0 +1,121 @@
+<html>
+	<head>
+		<meta name="color-scheme" content="dark light" />
+		<style type="text/css">
+			:root {
+			  --fg-color-light: #cacaca;
+			  --bg-color-light: #cacaca;
+			  --fg-color-dark: #cacaca;
+			  --bg-color-dark: #cacaca;
+			}
+			html, body {
+				height: 100%;
+				margin: 0;
+				padding: 0;
+				text-rendering: optimizeLegibility;
+			}
+			#container {
+				min-height: 100%;
+				display: flex;
+			}
+			#controls-container, #content-container {
+				flex: 1 1 50%;
+				min-height: 100%;
+				padding: 1em;
+			}
+			#plaintextInput {
+				width: 80ex;
+				min-height: 100%;
+				height: min-content;
+				border-radius: 16px;
+				background-color: var(--bg-color-dark);
+			}
+		</style>
+	</head>
+	<body>
+		<div id="container">
+		<!--
+			TODO: automatic render from being fed a plaintext submission URL
+			 - take entry url
+			 - get txt content
+			 - get user palette
+			 - render png
+			 - maybe even forward to render submit page and prepopulate??
+		-->
+			<div id="content-container">
+				<textarea id="plaintextInput" autocomplete="off" spellcheck="false">
+NES (Nintendo Entertainment System) game soundtracks often feature archetypal tracks that are characteristic of the 8-bit era. Here are some common archetypal tracks found in NES game soundtracks:
+
+    Title Screen Music: Typically a catchy and memorable tune that sets the tone for the game.
+
+    Level/Stage Music: Each level or stage in the game may have its own unique music. These tracks are often designed to loop seamlessly since levels could take varying amounts of time to complete.
+
+    Boss Battle Music: A more intense and fast-paced track that plays during challenging boss battles to heighten the tension.
+
+    Victory/Level Clear Jingle: A short celebratory tune that plays when a player completes a level or defeats a boss.
+
+    Game Over Music: A somber or dramatic tune that plays when the player loses all lives and the game is over.
+
+    Ending Credits Music: Played during the game's ending credits, this track often provides a sense of closure and accomplishment.
+
+    Pause Menu Music: When the game is paused, there might be a specific track playing in the background.
+
+    Final Boss Music: In games with multiple bosses, there might be a distinct track for the ultimate or final boss battle, signaling a climax in the game.
+
+    Action/Adventure Theme: Games in action or adventure genres often have a versatile track that adapts to the on-screen action, such as exploration or intense moments.
+
+    Character Select/Menu Music: In games with multiple characters or modes, there may be music for character selection or menu navigation.
+
+NES soundtracks are known for their memorable melodies, limited but distinctive sound palette, and the ability to evoke a sense of nostalgia. Composers like Koji Kondo (Super Mario Bros., The Legend of Zelda) and many others contributed to creating these iconic and timeless soundtracks.
+				</textarea>
+			</div>
+			<div id="controls-container">
+				<label><span>Import botb palette: </span><input type="url" /></label>
+				<ul>
+					<li><label>
+						<span>Background Color:</span>
+						<input type="color" id="bgColor" value="#2d3250" />
+					</label></li>
+					<li><label>
+							<span>Text Color:</span>
+							<input type="color" id="fgColor" value="#7077a1" />
+					</label></li>
+					<li><label>
+							<span>Text Size:</span>
+							<input type="number" id="fontSize" value="24" min="1" />
+					</label></li>
+					<li><label>
+							<span>Textbox Padding:</span>
+							<input type="number" id="textboxPadding" value="36" min="0" />
+					</label></li>
+				</ul>
+				<button type="button">Download .png</button>
+			</div>
+		</div>
+		
+		<!--	jibbletyscrills	-->
+		
+		<script type="text/javascript">
+			let bgColorEl,fgColorEl,fontSizeEl,textboxPaddingEl,plaintextInputEl;
+			
+			function applyColors(){
+				plaintextInputEl.style.backgroundColor = bgColorEl.value;
+				plaintextInputEl.style.padding = textboxPaddingEl.value;
+				plaintextInputEl.style.color = fgColorEl.value;
+				plaintextInputEl.style.fontSize = fontSizeEl.value;
+			}
+			
+			document.addEventListener("DOMContentLoaded", () => {
+				bgColorEl = document.querySelector('#bgColor');
+				fgColorEl = document.querySelector('#fgColor');
+				fontSizeEl = document.querySelector('#fontSize');
+				textboxPaddingEl = document.querySelector('#textboxPadding');
+				plaintextInputEl = document.querySelector('#plaintextInput');
+				[bgColorEl,fgColorEl,fontSizeEl,textboxPaddingEl,plaintextInputEl].forEach(el=>{
+					el.addEventListener('change', applyColors);
+				});
+				applyColors();
+			});
+		</script>
+	</body>
+</html>
