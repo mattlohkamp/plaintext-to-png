@@ -48,10 +48,18 @@
 		<div id="root"></div>
 		<script type="text/babel">
 			/*
+				TODO: three methods of acquiring content, in descending order of ease of use:
+				1. paste in a botb entry URL
+				2. paste in plaintext
+				3. upload a .txt file
+			*/
+
+			/*
 				GET https://battleofthebits.com/arena/Entry/santa+contest/64337/
 				-> `https://battleofthebits.com/api/v1/entry/load/${entry.id}`
 					-> `"${entry.title}" by ${entry.authors_display} for ${entry.battle.title} (${entry.datetime_display})`
 					-> GET `https://battleofthebits.com/${donload_url}`
+						... bad news. we can't directly load entry content this way, it's disallowed by botb :[
 					-> populate textarea with plaintext content
 					-> GET `https://battleofthebits.com/ajax/req/botbr/AjaxPalette/${botbr.id}`
 					-> parse out palettes and select on botbr.palette_id
@@ -60,11 +68,20 @@
 			const entryURLIDRegex = /\/Entry\/[^\/]+\/(\d+)/;
 			const entryURLInputRegex =
 				"https?:\/\/battleofthebits.com\/arena\/Entry\/.*";
+
+			const APIRoot = "https://battleofthebits.com";
 			const APILoadEntry = (entryID) =>
-				`https://battleofthebits.com/api/v1/entry/load/${entryID}`;
+				`${APIRoot}/api/v1/entry/load/${entryID}`;
+			const APIDownloadEntry = (downloadURL) => `${APIRoot}${downloadURL}`; //	leading '/' included
+
+			//battleofthebits.com/player/EntryDonload/64337/BotB+64337+cabbage+drop+-+santa+contest.txt
 
 			function renderFetchingMessage(entryID) {
 				return `supplicating server for entry #${entryID}, please wait...`;
+			}
+
+			function renderDownloadingMessage(downloadURL) {
+				return `donloading contents of "${downloadURL}" please wait...`;
 			}
 
 			function renderFetchSuccessMessage(entry) {
@@ -76,23 +93,64 @@
 			function getPaletteByID(paletteID) {}
 
 			function Plaintext2PNG() {
+				/*
+					TODO: entryLoadingStatus could be an enum:
+						idle (blank)
+						loading (spinner)
+						success (check)
+						error (x)
+				*/
 				const [entryLoading, setEntryLoading] = React.useState(false);
+
+				const [entryJSON, setEntryJSON] = React.useState(null);
+
+				/*
+					TODO: statusInput -
+						maybe it's a separate element that takes an enum and arguments?
+						like <statusText message=${statusTypeEnum} data=${} />
+						so it's still a presentational component??
+				*/
+
+				const [statusInputValue, setStatusInputValue] = React.useState(null);
+
+				const [plaintextValue, setPlaintextValue] = React.useState(null);
 
 				const entryURLInputElement = React.useRef(null);
 				const fetchStatusInputElement = React.useRef(null);
 				const fetchEntryURLButtonElement = React.useRef(null);
 
+				/*
+					TODO: url input + submit btn + request status + result display + reset btn etc
+						 - could be its own component - that emits events for status and data?
+						 - because isn't that kind of a generic encapsulated element? a text input for a url, a button to load it, a set of statuses to display regarding the loading process, and the result of the loading operation at the end?
+						 - it could take a list of custom messages - or even better a collection of custom status message generator functions - maybe with the assumption that each would take *something* as a generic argument? the request object itself perhaps?
+						 - validation could / should live there too
+						 - so maybe it just takes a config object - orrrrrr does react do slots?
+						 - it does! https://sandroroth.com/blog/react-slots/#multiple-slot-props
+				*/
+
 				async function getEntryByID(entryID) {
 					setEntryLoading(true);
 					fetchEntryURLButtonElement.current.disabled = true;
-					fetchStatusInputElement.current.value =
-						renderFetchingMessage(entryID);
-					const fetchEntryResponse = await fetch(APILoadEntry(entryID));
-					//	TODO: error-handling
-					const entryJSON = fetchEntryResponse.json();
+					setStatusInputValue(renderFetchingMessage(entryID));
+					const fetchResponse = await fetch(APILoadEntry(entryID));
+					//	TODO: error handling
+					const responseJSON = fetchResponse.json();
 					fetchEntryURLButtonElement.current.disabled = false;
 					setEntryLoading(false);
-					return entryJSON;
+					return responseJSON;
+				}
+
+				async function getContentByDownloadURL(downloadURL) {
+					setEntryLoading(true);
+					fetchEntryURLButtonElement.current.disabled = true;
+					setStatusInputValue(renderDownloadingMessage(downloadURL));
+					const fetchResponse = await fetch(APIDownloadEntry(downloadURL));
+					//	TODO: error handling
+					const responseText = fetchResponse.text();
+					fetchEntryURLButtonElement.current.disabled = false;
+					setEntryLoading(false);
+					return responseText;
 				}
 
 				async function populateFromEntryURL() {
@@ -100,70 +158,88 @@
 					if (entryURLIsValid) {
 						const [, entryID] =
 							entryURLInputElement.current.value.match(entryURLIDRegex);
-						const entry = await getEntryByID(entryID);
-						fetchStatusInputElement.current.value =
-							renderFetchSuccessMessage(entry);
-						//	TODO:	put content into textarea
+						const entryJSON = await getEntryByID(entryID);
+						setEntryJSON(entryJSON);
+						setStatusInputValue(renderFetchSuccessMessage(entryJSON));
+						const plaintextContent = await getContentByDownloadURL(
+							entryJSON.donload_url
+						);
+						setPlaintextValue(plaintextContent);
 					}
 				}
 
-				function onClickFetchPlaintext() {
-					populateFromEntryURL();
+				function handleChangePlaintextArea(changeEvent) {
+					setplaintextValue(changeEvent.target.value);
 				}
 
+				function handleSubmitEntryURL(submitEvent) {
+					submitEvent.preventDefault();
+					//	TODO: form validation goes here, then url stored in state, THEN populate is triggered?
+					populateFromEntryURL();
+				}
+				//	content acquire component: url / upload / paste
+				//	TODO: https://medium.com/@amitonline/building-accessible-forms-in-react-a-comprehensive-guide-c065f9f98507
+				//	content display configurator component: width, spacing, size, colours, maybe font
 				return (
-					<form>
-						<fieldset>
-							<label>
-								<span>Emtry URL:</span>
-								<input
-									ref={entryURLInputElement}
-									type="url"
-									required
-									minLength="40"
-									pattern={entryURLInputRegex}
-									placeholder="https://battleofthebits.com/arena/Entry/example/565656/"
-								/>
-							</label>
-							<button
-								ref={fetchEntryURLButtonElement}
-								type="button"
-								onClick={onClickFetchPlaintext}>
-								{entryLoading && <div className="loader"></div>}
-								<span>Procure Plaintext</span>
-							</button>
-							<input
-								ref={fetchStatusInputElement}
-								id="fetch-status-input"
-								type="text"
-								readOnly
-								placeholder="supplicating server..."
-							/>
-						</fieldset>
-						<fieldset>
-							<div>OR</div>
-							<label>
-								<span>Postod your plaintext below:</span>
-								<textarea defaultValue="Hello, world!"></textarea>
-							</label>
-							<label>
-								<span>Width (px)</span>
-								<input name="width" type="number" defaultValue="450" />
-							</label>
-							<label>
-								<span>Text Size (pt)</span>
-								<input name="size" type="number" defaultValue="16" />
-							</label>
-							<label>
-								<span>Line Spacing (%)</span>
-								<input name="size" type="number" defaultValue="16" />
-							</label>
-							<label>
-								<span>Padding (px)</span>
-								<input name="padding" type="number" defaultValue="5" />
-							</label>
-						</fieldset>
-					</form>
+					<>
+						<form onSubmit={handleSubmitEntryURL}>
+							<fieldset>
+								<label>
+									<span>Emtry URL:</span>
+									<input
+										autoFocus
+										ref={entryURLInputElement}
+										type="url"
+										required
+										minLength="40"
+										pattern={entryURLInputRegex}
+										placeholder="https://battleofthebits.com/arena/Entry/example/565656/"
+									/>
+								</label>
+								<button ref={fetchEntryURLButtonElement} type="submit">
+									{entryLoading ? <div className="loader"></div> : null}
+									<span>Procure Plaintext</span>
+								</button>
+								{statusInputValue ? (
+									<input
+										ref={fetchStatusInputElement}
+										id="fetch-status-input"
+										type="text"
+										value={statusInputValue}
+										readOnly
+									/>
+								) : null}
+							</fieldset>
+						</form>
+						<form>
+							<fieldset>
+								<div>OR</div>
+								<label>
+									<span>Postod your plaintext below:</span>
+									<textarea
+										placeholder="Once Upon A Time..."
+										value={plaintextValue ?? ""}
+										onChange={handleChangePlaintextArea}></textarea>
+								</label>
+								<label>
+									<span>Width (px)</span>
+									<input name="width" type="number" defaultValue="450" />
+								</label>
+								<label>
+									<span>Text Size (pt)</span>
+									<input name="size" type="number" defaultValue="16" />
+								</label>
+								<label>
+									<span>Line Spacing (%)</span>
+									<input name="size" type="number" defaultValue="16" />
+								</label>
+								<label>
+									<span>Padding (px)</span>
+									<input name="padding" type="number" defaultValue="5" />
+								</label>
+							</fieldset>
+						</form>
+					</>
 				);
 			}
 
